@@ -41,7 +41,7 @@ If code and spec disagree, stop and ask. Don't silently pick one.
 ## Commands (available after Phase 1, Task 1)
 
 ```bash
-docker compose -f docker-compose.dev.yml up -d   # Postgres + MinIO
+docker compose -f docker-compose.dev.yml up -d   # MinIO (DB is the remote dev Postgres)
 npm run dev | npm test | npm run test:int | npm run build | npm run perf
 npm run db:generate | npm run db:migrate | npm run db:seed
 ```

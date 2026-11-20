@@ -6,7 +6,7 @@
 
 **Architecture:** One Next.js 16 App Router app (existing scaffold) with Server Actions and route handlers, Drizzle ORM over self-managed PostgreSQL, MinIO for images, all run with Docker Compose on a USA VPS behind `cloudflared`. Pure logic (crypto, validation, formatting, ranking-free stats) lives in `src/lib/**` and is unit-tested; DB-touching functions are integration-tested against a real Postgres.
 
-**Tech Stack:** Next.js 16.4.6, React 19.3, TypeScript 5, Tailwind 4, PostgreSQL 17, Drizzle ORM + drizzle-kit, Zod, `argon2`, `sharp`, MinIO (`@aws-sdk/client-s3`), `altcha` + `altcha-lib`, `otplib`, shadcn/ui (Radix, vaul, sonner), Motion (`LazyMotion` + `m`), lucide-react, react-hook-form, Recharts (via shadcn `chart`, `/stats` only), Vitest, Lighthouse CI.
+**Tech Stack:** Next.js 16.4.6, React 19.3, TypeScript 5, Tailwind 4, PostgreSQL 16, Drizzle ORM + drizzle-kit, Zod, `argon2`, `sharp`, MinIO (`@aws-sdk/client-s3`), `altcha` + `altcha-lib`, `otplib`, shadcn/ui (Radix, vaul, sonner), Motion (`LazyMotion` + `m`), lucide-react, react-hook-form, Recharts (via shadcn `chart`, `/stats` only), Vitest, Lighthouse CI.
 
 **Spec:** `docs/superpowers/specs/2026-11-20-vejal-bd-platform-design.md`
 
@@ -24,7 +24,7 @@
 - Description field warning copy: `কারো ব্যক্তিগত নাম লিখবেন না`.
 - Rate-limit rows deleted after **30 days**; IP hash salt rotates **daily** and old salts are deleted.
 - Admin and moderator accounts require TOTP 2FA. Every admin route **and** server action checks role itself.
-- Secrets only from env: `PASSWORD_PEPPER_V1`, `HMAC_USERNAME_KEY_V1`, `HMAC_EMAIL_KEY_V1`, `HMAC_TRACKING_KEY_V1`, `TOTP_ENC_KEY`, `ALTCHA_HMAC_KEY`, `DATABASE_URL`, `S3_*`.
+- Secrets only from env: `PASSWORD_PEPPER_V1`, `HMAC_USERNAME_KEY_V1`, `HMAC_EMAIL_KEY_V1`, `HMAC_TRACKING_KEY_V1`, `TOTP_ENC_KEY`, `ALTCHA_HMAC_KEY`, `DATABASE_URL`, `TEST_DATABASE_URL`, `S3_*`.
 - **Mobile-first and fast:** design at 360px width first; pages are Server Components unless they need interactivity; mobile Lighthouse budgets from Task 2 (LCP ≤ 2.5 s, script ≤ 120 KB gzip; `/stats` ≤ 230 KB) must pass. Recharts never loads outside `/stats`. UI built only from Task 2's shadcn components; original design (not a copy of ghush.site).
 - Commit after every task with conventional-commit messages ending in the attribution line.
 
@@ -101,7 +101,7 @@ tests/**                        # mirrors src/lib
 - Produces: `env` — typed object of all Global Constraints secrets; `parseEnv(raw: Record<string,string|undefined>): Env` throws listing missing keys.
 
 - [ ] **Step 1: Install deps** — `npm i drizzle-orm pg zod argon2 sharp @aws-sdk/client-s3 altcha altcha-lib otplib` and `npm i -D drizzle-kit vitest @types/pg tsx`. Add scripts: `test`, `test:int` (`vitest run tests/int`), `db:generate`, `db:migrate`, `db:seed`.
-- [ ] **Step 2: `docker-compose.dev.yml`** — `postgres:17` (db `vejal`, plus `vejal_test`), `minio/minio` with bucket `vejal-images`; ports bound to `127.0.0.1` only.
+- [ ] **Step 2: `docker-compose.dev.yml`** — `minio/minio` only, with bucket `vejal-images`, credentials from `.env` `S3_ACCESS_KEY`/`S3_SECRET_KEY`, port bound to `127.0.0.1`. The dev database is the team's remote PostgreSQL **16** (`DATABASE_URL` in `.env`, already set up); integration tests use schema `test` in the same database via `TEST_DATABASE_URL` (`search_path=test`, schema already created). `.env` and `.env.example` already exist — keep `parseEnv` keys in sync with `.env.example`.
 - [ ] **Step 3: Write failing test** `tests/lib/env.test.ts`:
 
 ```ts
@@ -165,12 +165,14 @@ it("Sparkline renders one polyline with N points", () => {
 **Interfaces:**
 - Produces tables (Drizzle names): `issueTypes`, `divisions`, `districts`, `upazilas`, `entities`, `reports`, `reportImages`, `users`, `sessions`, `rateLimits`, `ipSalts`, `adminAuditLog`, `transparencyRequests`. Columns exactly as spec §7, with these Phase-1 specifics:
   - `reports`: `id uuid`, `publicId text unique` (8-char base32), `issueType text fk`, `status enum('pending','approved','rejected','hidden') default 'pending'`, `rejectReason enum('spam','personal_name','implausible','duplicate','other')?`, `division`, `district`, `upazila?`, `areaText?`, `entityId?`, `incidentMonth date` (day=1), `description text`, `details jsonb`, `category text`, `amountBdt bigint?`, `outcome text?`, `trackingHash text unique`, `idempotencyKey uuid unique`, `flags text[] default '{}'`, `userId uuid?`, `realWeight/fakeWeight real default 0`, `rankScore real default 0`, `createdAt`, `reviewedAt?`, `reviewedBy?`. Indexes on `(status, createdAt)`, `(status, division)`, `(status, issueType, category)`.
-  - `users`: `id`, `pseudonym unique`, `usernameHmac unique`, `emailHmac unique?`, `keyVersion int`, `passwordHash`, `role enum('user','moderator','admin')`, `totpSecretEnc text?`, `createdAt`.
+  - `users`: `id`, `pseudonym unique`, `usernameHmac unique`, `emailHmac unique?`, `keyVersion int`, `passwordHash`, `role enum('user','moderator','admin')`, `totpSecretEnc text?`, `mustChangePassword bool default false`, `createdAt`.
   - `ipSalts`: `day date pk`, `salt bytea`.
 - Exported types from `schema.ts`: `Status`, `RejectReason`, `EntityKind`, `Role`, `User` (= `typeof users.$inferSelect`), `Report`.
 - `ipBlocks` table: `ipHash text pk`, `until timestamptz` (≤ end of current UTC day, since salts rotate daily).
+- `siteSettings` table: `key text pk`, `value jsonb`, `updatedAt`, `updatedBy?` (used by Task 12).
+- `categories` table: `id`, `issueType fk`, `field enum('category','adulteration_type','detection','service')`, `slug`, `labelBn`, `enabled bool default true`, `sort int`; unique `(issueType, field, slug)`. Seeded from `ISSUE_FIELDS` defaults (Task 5) by Task 12.
 - `db` from `client.ts`; `seed()` inserts issue types `ghush` (`ঘুষ`), `vejal` (`ভেজাল`) and the 8 divisions / 64 districts / upazilas from `bd.json` (idempotent).
-- Test helper `resetDb(): Promise<void>` truncates all tables on `TEST_DATABASE_URL` and reseeds.
+- Test helper `resetDb(): Promise<void>` truncates all tables on `TEST_DATABASE_URL` and reseeds. A Vitest `globalSetup` runs migrations against `TEST_DATABASE_URL` with Drizzle's `migrationsSchema: "test"` so the test migration journal never touches the dev `drizzle` schema; it refuses to run if `TEST_DATABASE_URL` lacks `search_path=test`.
 
 - [ ] **Step 1: Write failing integration test** `tests/int/schema.test.ts`:
 
@@ -418,23 +420,49 @@ it("autocomplete never returns entities with only pending reports", async () => 
 ### Task 11: Admin moderation
 
 **Files:**
-- Create: `src/lib/reports/moderation.ts`, `src/app/admin/page.tsx` (queue), `src/app/admin/reports/[id]/page.tsx`, `src/app/admin/reports/[id]/actions.ts`, `src/app/admin/entities/page.tsx`, `src/app/admin/entities/actions.ts`, `src/app/admin/transparency/page.tsx`, `tests/int/moderation.test.ts`
+- Create: `src/lib/reports/moderation.ts`, `src/lib/cdn.ts`, `src/app/admin/queue/page.tsx`, `src/app/admin/reports/page.tsx` (all reports, filter by status), `src/app/admin/reports/[id]/page.tsx`, `src/app/admin/reports/[id]/actions.ts`, `src/app/admin/entities/page.tsx`, `src/app/admin/entities/actions.ts`, `src/app/admin/transparency/page.tsx`, `tests/int/moderation.test.ts`
 
 **Interfaces:**
 - `approveReport(id: string, actor: User, edits?: { description?: string }): Promise<void>` — saves redacted description, sets `approved`, `reviewedAt/By`, increments `entities.approvedReportCount`, audits.
 - `rejectReport(id: string, actor: User, reason: RejectReason): Promise<void>`.
-- `setImageStatus(imageId: string, actor: User, status: "approved"|"rejected"): Promise<void>` — rejected images deleted from S3.
+- `setImageStatus(imageId: string, actor: User, status: "approved"|"rejected"): Promise<void>` — rejected images deleted from S3 and purged from CDN.
+- `hideReport(id: string, actor: User, note: string)` / `unhideReport(id: string, actor: User)` — moderator+; `hidden` ↔ `approved`; hide purges the report's image URLs from CDN.
+- `editApprovedReport(id: string, actor: User, edits: { description: string }): Promise<void>` — moderator+; redaction after publication; audit stores that a change happened, not the old text.
+- `deleteReport(id: string, actor: User, confirmPublicId: string): Promise<void>` — **admin only**; `confirmPublicId` must equal the report's `publicId` (typed confirmation); deletes row, images from S3, CDN cache; decrements entity count; audit row keeps only `publicId`, actor, time.
+- `purgeCdn(paths: string[]): Promise<void>` in `src/lib/cdn.ts` — Cloudflare API `purge_cache` by URL using `CLOUDFLARE_ZONE_ID` + `CLOUDFLARE_PURGE_TOKEN`; **no-op when unset** (dev). Failures are logged (path only) and retried once; never block the moderation action.
 - `mergeEntities(fromId: string, intoId: string, actor: User): Promise<void>` — repoints reports, sets `mergedInto`, recomputes counts.
 - `recordTransparencyRequest(actor: User, input: { receivedAt: Date; requesterType: "government"|"legal"|"company"|"other"; summary: string; outcome: "no_data_held"|"refused"|"content_removed"|"other" }): Promise<void>`.
 - `blockIpHash(ipHash: string, actor: User): Promise<void>` — inserts `ipBlocks` until end of current UTC day; admin page lists today's top rate-limited hashes (hash prefix + hit count only).
 - Queue page: pending reports oldest first; flagged reports (`flags` non-empty) badged; shows upazila/area text; actions call `requireRole("moderator")`; entity merge and transparency entry require `admin`.
 
-- [ ] **Step 1: Failing tests:** approve with edited description persists edit and status; reject sets reason visible to `lookupByTrackingCode`; merge moves reports and counts; moderator calling `mergeEntities` path is refused; a blocked ipHash gets `ok: false` from `checkRateLimit` until midnight UTC; every action writes one `adminAuditLog` row.
+- [ ] **Step 1: Failing tests:** approve with edited description persists edit and status; reject sets reason visible to `lookupByTrackingCode`; merge moves reports and counts; moderator calling `mergeEntities` path is refused; hide sets status `hidden` and its images 404 at `/images/[key]`, unhide restores both; `deleteReport` by a moderator is refused and with a wrong `confirmPublicId` throws; after delete the report row and its S3 objects are gone and the audit row has no description text; `purgeCdn` is called with the image paths on hide/delete (mocked); a blocked ipHash gets `ok: false` from `checkRateLimit` until midnight UTC; every action writes one `adminAuditLog` row.
 - [ ] **Step 2: Run** → FAIL. **Step 3: Implement** lib, then pages.
 - [ ] **Step 4: Run** → PASS; manually approve the Task 8 report and confirm its image now loads at `/images/[key]`.
-- [ ] **Step 5: Commit** `feat(admin): moderation queue, redaction, images, entities, transparency log`.
+- [ ] **Step 5: Commit** `feat(admin): moderation queue, hide/delete, redaction, images, entities, transparency log, CDN purge`.
 
-### Task 12: Public ledger, report detail and home
+### Task 12: Admin console — overview, team, settings, audit
+
+**Files:**
+- Create: `src/lib/settings.ts`, `src/lib/categories.ts`, `src/lib/team.ts`, `src/app/admin/page.tsx` (overview), `src/app/admin/team/{page,actions}.tsx`, `src/app/admin/settings/{page,actions}.tsx`, `src/app/admin/audit/page.tsx`, `src/app/admin/blocks/page.tsx`, `src/components/admin/{AdminNav,Shortcuts}.tsx`, `tests/int/settings.test.ts`, `tests/int/team.test.ts`
+- Modify: `src/lib/ratelimit.ts`, `src/lib/captcha.ts` (read limits/difficulty from settings), `src/lib/reports/fields.ts` + `src/app/report/actions.ts` (validate category slugs against enabled `categories`), `src/app/layout.tsx` (site notice banner), `src/lib/db/seed.ts` (seed categories)
+
+**Interfaces:**
+- `getSettings(): Promise<SiteSettings>` (cached 60 s, `"use cache"` with tag `settings`) / `updateSettings(actor: User, patch: Partial<SiteSettings>): Promise<void>` (admin only; revalidates tag; audits changed keys).
+- `type SiteSettings = { submissionsPaused: boolean; noticeBn: string | null; captchaMaxNumber: number; rateLimits: Record<"report"|"track"|"upload", { max: number; windowSec: number }>; issueTypesEnabled: Record<string, boolean> }` — defaults equal Task 6 values and both issue types enabled.
+- When `submissionsPaused` (or the issue type is disabled): `/report` shows `noticeBn` and the submit action rejects with code `paused` — checked server-side, not just hidden in UI.
+- `listCategories(issueType, field)`, `upsertCategory(actor, input)`, `setCategoryEnabled(actor, id, enabled)` — admin only; disabled slugs stay valid on existing reports but can't be chosen for new ones.
+- `listTeam()`, `inviteModerator(actor, username, role): Promise<{ otpauthUri: string; tempPassword: string }>` (shown once; user must change password on first login), `setRole(actor, userId, role)`, `removeMember(actor, userId)`, `resetTotp(actor, userId): Promise<{ otpauthUri: string }>` — admin only; an admin cannot remove or demote themselves or the last admin; removing a member destroys their sessions.
+- Overview (`/admin`): pending count, flagged count, approved/rejected today and this week, oldest pending age, submissions-paused state.
+- Audit (`/admin/audit`): admin only; paginated, filter by actor/action.
+- `<Shortcuts>` on queue/review pages: `A` approve, `R` reject menu, `H` hide, `J`/`K` next/previous; ignored while typing in inputs.
+- Mobile: `AdminNav` collapses into a `Drawer`; review page usable at 360px.
+
+- [ ] **Step 1: Failing tests:** paused settings make `submitReport` reject with `paused`; disabled issue type rejected server-side; updated rate limit is honoured by `checkRateLimit` after cache revalidation; disabled category rejected for new reports but existing report still renders its label; moderator calling `updateSettings`/`inviteModerator` refused; last admin cannot be demoted or removed; removed member's session no longer passes `requireRole`; every change writes an audit row.
+- [ ] **Step 2: Run** → FAIL. **Step 3: Implement** lib, then pages.
+- [ ] **Step 4: Run** → PASS; manually toggle "submissions paused" and confirm `/report` shows the notice within 60 s.
+- [ ] **Step 5: Commit** `feat(admin): overview, team management, site settings, emergency pause, audit viewer, shortcuts`.
+
+### Task 13: Public ledger, report detail and home
 
 **Files:**
 - Create: `src/lib/reports/queries.ts`, `src/app/reports/page.tsx`, `src/app/reports/[id]/page.tsx`, `src/components/ReportCard.tsx`, `src/components/Disclaimer.tsx`, `tests/int/queries.test.ts`
@@ -454,7 +482,7 @@ it("autocomplete never returns entities with only pending reports", async () => 
 - [ ] **Step 4: Run** → PASS; `npm run build` succeeds (no `cacheComponents` errors); `grep -ri "create next app\|vercel" src/` returns nothing; `npm run perf` passes for `/` and `/reports`; `grep -r "recharts\|InteractiveChart" .next/static` finds it only in the `/stats` chunk.
 - [ ] **Step 5: Commit** `feat: public ledger, report detail, home`.
 
-### Task 13: Stats page
+### Task 14: Stats page
 
 **Files:**
 - Create: `src/lib/reports/stats.ts`, `src/app/stats/page.tsx`, `tests/int/stats.test.ts`
@@ -467,7 +495,7 @@ it("autocomplete never returns entities with only pending reports", async () => 
 - [ ] **Step 2: Run** → FAIL. **Step 3: Implement.** **Step 4: Run** → PASS; `npm run perf` passes the `/stats` budget.
 - [ ] **Step 5: Commit** `feat: stats with small-cell suppression`.
 
-### Task 14: Information pages
+### Task 15: Information pages
 
 **Files:**
 - Create: `src/app/(info)/how-it-works/page.tsx`, `faq/page.tsx`, `privacy/page.tsx`, `transparency/page.tsx`, `disclaimer/page.tsx`, `src/lib/transparency.ts`, `tests/int/transparency.test.ts`
@@ -481,7 +509,7 @@ it("autocomplete never returns entities with only pending reports", async () => 
 - [ ] **Step 2: Run** → FAIL. **Step 3: Implement.** **Step 4: Run** → PASS.
 - [ ] **Step 5: Commit** `feat: privacy, transparency and info pages`.
 
-### Task 15: Production deployment
+### Task 16: Production deployment
 
 **Files:**
 - Create: `Dockerfile`, `docker-compose.prod.yml`, `scripts/backup.sh`, `docs/deploy.md`
@@ -489,11 +517,13 @@ it("autocomplete never returns entities with only pending reports", async () => 
 
 **Interfaces:**
 - Compose services: `app` (Next standalone, runs migrations on start), `postgres`, `minio`, `cloudflared` (token from env), `cron` (runs `scripts/cleanup.ts` daily, `backup.sh` nightly). No service publishes ports to the host except via `cloudflared`. App and proxy logging configured to exclude IPs and bodies.
-- `backup.sh`: `pg_dump | age -r $BACKUP_PUBKEY` + MinIO mirror encrypted the same way, keep 14 days.
-- `docs/deploy.md`: VPS setup, Cloudflare tunnel creation, set Cloudflare logging to minimum, create first admin with `scripts/create-admin.ts`, restore from backup.
+- **Cloudflare Access** application protecting `/admin*` (free Zero Trust plan, email one-time-PIN, allow-list of team emails) — in front of, not instead of, password + TOTP. App additionally rejects `/admin` requests lacking the `Cf-Access-Jwt-Assertion` header when `CF_ACCESS_REQUIRED=true` (prod).
+- Approved images served with `Cache-Control: public, max-age=31536000, immutable`; `CLOUDFLARE_ZONE_ID` / `CLOUDFLARE_PURGE_TOKEN` (token scoped to Cache Purge only) set in prod.
+- `backup.sh`: `pg_dump | age -r $BACKUP_AGE_PUBKEY` + MinIO mirror encrypted the same way, keep 14 days.
+- `docs/deploy.md`: VPS setup, Cloudflare tunnel creation, set Cloudflare logging to minimum, configure Cloudflare Access for `/admin*`, create the purge-only API token, create first admin with `scripts/create-admin.ts`, restore from backup.
 
 - [ ] **Step 1: Run** `docker compose -f docker-compose.prod.yml up --build` locally with a test tunnel token disabled (`cloudflared` commented) → app reachable on the internal network, migrations applied.
-- [ ] **Step 2: Verify** `curl -I` shows the CSP/Referrer/Permissions headers; `docker compose logs app` after submitting a report contains no IP address or description text.
+- [ ] **Step 2: Verify** `curl -I` shows the CSP/Referrer/Permissions headers; an approved image returns the immutable `Cache-Control`; with `CF_ACCESS_REQUIRED=true`, `curl /admin` without the Access header returns 403; `docker compose logs app` after submitting a report contains no IP address or description text.
 - [ ] **Step 3: Verify** `scripts/backup.sh` produces an encrypted file and a restore into a fresh Postgres reproduces the report count.
 - [ ] **Step 4: Commit** `chore: production compose, cloudflared, backups, deploy guide`.
 
@@ -501,5 +531,6 @@ it("autocomplete never returns entities with only pending reports", async () => 
 
 ## Later plans (not in this plan)
 
-- **Phase 2:** public signup (username/email/password, email verification via SES, HMAC storage, reset flow), pseudonyms, সত্যি/ভুয়া voting with weight ramp + Wilson ranking, comments, bans + `/bans`, linking reports to accounts.
+- **Video uploads:** deferred (anonymity, moderation load, CPU/storage). If added: ≤60 s / 50 MB, ffmpeg re-encode with metadata stripped, optional audio removal, admin-only by default, served from R2 or a paid video CDN (Cloudflare's free CDN is not for video).
+- **Phase 2:** admin user & comment management (search by pseudonym, activity history, ban/unban, bulk-hide a user's comments, delete account); public signup (username/email/password, email verification via SES, HMAC storage, reset flow), pseudonyms, সত্যি/ভুয়া voting with weight ramp + Wilson ranking, comments, bans + `/bans`, linking reports to accounts.
 - **Phase 3:** entity pages (≥3 approved reports), richer stats.

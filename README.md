@@ -26,7 +26,7 @@ An anonymous, moderated public ledger where people in Bangladesh report bribery 
 
 ## Tech stack
 
-Next.js 16 (App Router) · React 19 · TypeScript · Tailwind 4 · shadcn/ui · Motion · PostgreSQL 17 + Drizzle · MinIO · Docker Compose · Cloudflare Tunnel.
+Next.js 16 (App Router) · React 19 · TypeScript · Tailwind 4 · shadcn/ui · Motion · PostgreSQL 16 + Drizzle · MinIO · Docker Compose · Cloudflare Tunnel.
 
 ## Getting started
 
@@ -34,7 +34,7 @@ These commands work once Phase 1, Task 1 of the plan is done:
 
 ```bash
 cp .env.example .env    # fill in secrets (each at least 32 bytes)
-docker compose -f docker-compose.dev.yml up -d
+docker compose -f docker-compose.dev.yml up -d   # MinIO (DB is the remote dev Postgres)
 npm install
 npm run db:migrate && npm run db:seed
 npm run dev             # http://localhost:3000

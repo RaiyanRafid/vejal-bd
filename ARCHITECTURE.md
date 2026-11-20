@@ -7,7 +7,7 @@ Full detail: [design spec §6–§8](docs/superpowers/specs/2026-11-20-vejal-bd-
 ```
 Visitor ──HTTPS──▶ Cloudflare ──Tunnel (cloudflared)──▶ VPS (USA, Docker Compose)
                                                          ├─ app       Next.js 16 standalone
-                                                         ├─ postgres  PostgreSQL 17
+                                                         ├─ postgres  PostgreSQL 16
                                                          ├─ minio     image storage (S3 API)
                                                          └─ cron      cleanup + encrypted backups
 ```

@@ -133,8 +133,15 @@ No optional contact field — the site does not collect reporter contact info.
 - Entity management: merge duplicates, rename, hide.
 - Comment moderation; ban management; rate-limit hits; short IP-hash blocks.
 - Transparency data entry (data/takedown requests received).
-- Audit log of every admin action.
-- Roles: `admin`, `moderator`. Admin accounts require TOTP 2FA.
+- Audit log of every admin action, with an admin-only viewer.
+- Hide/unhide any report (moderator+); edit/redact after publication; **permanent delete is admin-only** with typed confirmation, and removes images and CDN cache. Hide is the default; delete is for legal reasons or leaked personal data.
+- Overview dashboard; team management in the browser (add/remove moderators, change role, reset 2FA; the last admin can't be removed).
+- Site settings: enable/disable issue types, edit category lists, captcha difficulty and rate limits, and an **emergency switch** that pauses new reports and shows a notice.
+- Keyboard shortcuts for fast moderation; usable on a phone.
+- `/admin` sits behind **Cloudflare Access** (free Zero Trust, email PIN for the team) in addition to password + TOTP.
+- Approved images are cached by Cloudflare's CDN; hide/delete/reject purges them. No separate CDN. Video uploads are deferred.
+- Admins deliberately **cannot** see who submitted a report or any user's real email/IP, because none is stored.
+- Roles: `admin`, `moderator`. Admin and moderator accounts require TOTP 2FA.
 
 ## 7. Data model (sketch)
 
