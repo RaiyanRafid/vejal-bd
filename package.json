@@ -12,6 +12,7 @@
     "test:int": "vitest run --project int",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
+    "cleanup": "tsx --env-file=.env scripts/cleanup.ts",
     "db:seed": "tsx --env-file=.env src/lib/db/seed.ts"
   },
   "dependencies": {
