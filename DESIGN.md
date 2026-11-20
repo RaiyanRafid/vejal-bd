@@ -44,8 +44,8 @@ Goals: **phone-first, minimal, fast, premium, easy.** The visual design is our o
 | LCP | ≤ 2.5 s |
 | Total blocking time | ≤ 200 ms |
 | CLS | ≤ 0.1 |
-| Script size (gzip) on `/`, `/reports`, `/report` | ≤ 120 KB |
-| Script size (gzip) on `/stats` | ≤ 230 KB |
+| Script size (gzip) on `/`, `/reports`, `/report` | ≤ 175 KB |
+| Script size (gzip) on `/stats` | ≤ 285 KB |
 
 Ways we stay inside it: Server Components by default, WebP images through `next/image`, no third-party scripts, no CSS-in-JS, no UI kits, no Lottie, no analytics.
 

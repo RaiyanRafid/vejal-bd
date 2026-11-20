@@ -17,6 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { LazyToaster } from "@/components/ui/lazy-toaster";
 import { Textarea } from "@/components/ui/textarea";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
@@ -126,6 +127,7 @@ function Section() {
 export function Gallery() {
   return (
     <div className="space-y-10">
+      <LazyToaster />
       <Section />
       <div className="dark -mx-2 rounded-xl bg-background p-2 text-foreground">
         <Section />

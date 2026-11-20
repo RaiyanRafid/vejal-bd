@@ -5,7 +5,6 @@ import { MotionProvider } from "@/components/motion";
 import { BottomNav } from "@/components/shell/BottomNav";
 import { Header } from "@/components/shell/Header";
 import { StickyCta } from "@/components/shell/StickyCta";
-import { Toaster } from "@/components/ui/sonner";
 import { SITE_NAME, SITE_TAGLINE_BN } from "@/lib/site";
 
 const hind = Hind_Siliguri({
@@ -44,7 +43,6 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <main className="mx-auto w-full max-w-2xl flex-1 px-4 pt-6 pb-40 md:pb-16">{children}</main>
           <StickyCta />
           <BottomNav />
-          <Toaster />
         </MotionProvider>
       </body>
     </html>

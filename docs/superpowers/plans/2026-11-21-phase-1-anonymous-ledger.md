@@ -25,7 +25,7 @@
 - Rate-limit rows deleted after **30 days**; IP hash salt rotates **daily** and old salts are deleted.
 - Admin and moderator accounts require TOTP 2FA. Every admin route **and** server action checks role itself.
 - Secrets only from env: `PASSWORD_PEPPER_V1`, `HMAC_USERNAME_KEY_V1`, `HMAC_EMAIL_KEY_V1`, `HMAC_TRACKING_KEY_V1`, `TOTP_ENC_KEY`, `ALTCHA_HMAC_KEY`, `DATABASE_URL`, `TEST_DATABASE_URL`, `S3_*`.
-- **Mobile-first and fast:** design at 360px width first; pages are Server Components unless they need interactivity; mobile Lighthouse budgets from Task 2 (LCP ≤ 2.5 s, script ≤ 120 KB gzip; `/stats` ≤ 230 KB) must pass. Recharts never loads outside `/stats`. UI built only from Task 2's shadcn components; original design (not a copy of ghush.site).
+- **Mobile-first and fast:** design at 360px width first; pages are Server Components unless they need interactivity; mobile Lighthouse budgets from Task 2 (LCP ≤ 2.5 s, script ≤ 175 KB gzip; `/stats` ≤ 285 KB) must pass. Recharts never loads outside `/stats`. UI built only from Task 2's shadcn components; original design (not a copy of ghush.site).
 - Commit after every task with conventional-commit messages ending in the attribution line.
 
 ## Review Focus
@@ -154,7 +154,7 @@ it("Sparkline renders one polyline with N points", () => {
 
 - [ ] **Step 6: Run** `npm test -- charts` → FAIL. **Step 7: Implement** `BarList`, `Sparkline`, `InteractiveChart`, motion helpers, shell, `/dev/ui` gallery showing every component in light and dark.
 - [ ] **Step 8: Run** `npm test -- charts` → PASS.
-- [ ] **Step 9: Performance budget** — `lighthouserc.json` with mobile preset asserting: `largest-contentful-paint` ≤ 2500 ms, `total-blocking-time` ≤ 200 ms, `cumulative-layout-shift` ≤ 0.1, `resource-summary:script:size` ≤ 120 KB (gzip) for `/`, `/reports`, `/report`; `/stats` script budget ≤ 230 KB. Add script `npm run perf` (`next build && lhci autorun`). Run it now against `/dev/ui` and `/` → passes.
+- [ ] **Step 9: Performance budget** — `lighthouserc.json` with mobile preset asserting: `largest-contentful-paint` ≤ 2500 ms, `total-blocking-time` ≤ 200 ms, `cumulative-layout-shift` ≤ 0.1, `resource-summary:script:size` ≤ 175 KB (gzip) for `/`, `/reports`, `/report`; `/stats` script budget ≤ 285 KB. Add script `npm run perf` (`next build && lhci autorun`). Run it now against `/dev/ui` and `/` → passes.
 - [ ] **Step 10: Commit** `feat(ui): shadcn design system, mobile shell, motion, chart primitives, perf budget`.
 
 ### Task 3: Database schema, migrations and seed

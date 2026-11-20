@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { LazyMotion, MotionConfig, domAnimation } from "motion/react";
+import { LazyMotion, MotionConfig } from "motion/react";
 import * as m from "motion/react-m";
 
 // Always use `m`, never `motion` (keeps Motion ~5 KB).
@@ -9,7 +9,7 @@ export { m };
 
 export function MotionProvider({ children }: { children: ReactNode }) {
   return (
-    <LazyMotion features={domAnimation} strict>
+    <LazyMotion features={() => import("./motion-features").then((m) => m.default)} strict>
       <MotionConfig reducedMotion="user">{children}</MotionConfig>
     </LazyMotion>
   );
