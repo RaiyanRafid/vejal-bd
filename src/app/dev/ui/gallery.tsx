@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { BarList } from "@/components/charts/BarList";
 import { Sparkline } from "@/components/charts/Sparkline";
-import { m, fadeUp } from "@/components/motion";
+import { MotionProvider, m, fadeUp } from "@/components/motion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -126,12 +126,21 @@ function Section() {
 
 export function Gallery() {
   return (
+    <MotionProvider>
     <div className="space-y-10">
       <LazyToaster />
       <Section />
       <div className="dark -mx-2 rounded-xl bg-background p-2 text-foreground">
         <Section />
       </div>
+      <ul className="space-y-2">
+        {["এক", "দুই", "তিন"].map((t, i) => (
+          <li key={t} className="animate-fade-up rounded-lg border p-3" style={{ "--i": i } as React.CSSProperties}>
+            CSS stagger: {t}
+          </li>
+        ))}
+      </ul>
     </div>
+    </MotionProvider>
   );
 }

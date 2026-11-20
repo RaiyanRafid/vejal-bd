@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist_Mono, Hind_Siliguri } from "next/font/google";
 import "./globals.css";
-import { MotionProvider } from "@/components/motion";
 import { BottomNav } from "@/components/shell/BottomNav";
 import { Header } from "@/components/shell/Header";
 import { StickyCta } from "@/components/shell/StickyCta";
@@ -38,12 +37,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body className="flex min-h-full flex-col font-sans">
-        <MotionProvider>
-          <Header />
-          <main className="mx-auto w-full max-w-2xl flex-1 px-4 pt-6 pb-40 md:pb-16">{children}</main>
-          <StickyCta />
-          <BottomNav />
-        </MotionProvider>
+        <Header />
+        <main className="mx-auto w-full max-w-2xl flex-1 px-4 pt-6 pb-40 md:pb-16">{children}</main>
+        <StickyCta />
+        <BottomNav />
       </body>
     </html>
   );

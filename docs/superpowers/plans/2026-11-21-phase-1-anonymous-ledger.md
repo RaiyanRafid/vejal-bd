@@ -473,8 +473,8 @@ it("autocomplete never returns entities with only pending reports", async () => 
 - `listPublicReports(filters: { issueType?; division?; district?; category?; outcome?; sort: "latest"|"amount"; page: number }): Promise<{ items: PublicReport[]; total: number }>` — page size 20; only `approved`.
 - `getPublicReport(publicId: string): Promise<PublicReport | null>`.
 - `type PublicReport` — **only** the public fields from Global Constraints (no `upazila`, `areaText`, `trackingHash`, `flags`, `userId`, `reviewedBy`).
-- Consumes: Task 2 `ui/*`, `BarList`, `m`/`stagger`, `StickyCta`.
-- Home: counters (approved total, ghush total amount, per-issue counts), 6 latest (cards fade in with `stagger`), top divisions as `<BarList>` (server-rendered, no chart library), CTA `রিপোর্ট করুন`.
+- Consumes: Task 2 `ui/*`, `BarList`, CSS `animate-fade-up` stagger utility, `StickyCta`.
+- Home: counters (approved total, ghush total amount, per-issue counts), 6 latest (cards use the CSS stagger utility from Task 2), top divisions as `<BarList>` (server-rendered, no chart library), CTA `রিপোর্ট করুন`.
 - Ledger: filters as query params, opened in a `Drawer` on mobile; card/table toggle (`ToggleGroup`); `Skeleton` while streaming; detail shows `অযাচাইকৃত অভিযোগ` badge + `<Disclaimer />`.
 
 - [ ] **Step 1: Failing tests:** pending/rejected never listed; `Object.keys(PublicReport)` contains none of the admin-only keys; filter by district works; page 2 returns next 20.

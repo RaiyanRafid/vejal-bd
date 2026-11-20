@@ -34,6 +34,7 @@ Goals: **phone-first, minimal, fast, premium, easy.** The visual design is our o
 ## Motion
 
 - 250 ms or less, ease-out: page fade, card stagger, form step slide, vote feedback.
+- Page fade and card stagger on read-only pages use the CSS utilities `animate-fade-up` and `--i` stagger (zero JS). Motion is only for interactive client components (form steps, vote feedback), which mount `MotionProvider` themselves; it is not in the root layout.
 - `MotionConfig reducedMotion="user"`: no movement for users who ask for reduced motion.
 - Simple hover and press states use CSS transitions, not Motion.
 
