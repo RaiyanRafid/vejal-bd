@@ -8,6 +8,13 @@
       "when": 1795203035347,
       "tag": "0000_stormy_hulk",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1795203327435,
+      "tag": "0001_cloudy_starhawk",
+      "breakpoints": true
     }
   ]
 }

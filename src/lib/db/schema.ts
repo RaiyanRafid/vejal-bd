@@ -15,6 +15,10 @@ export const ENTITY_KINDS = ["office", "shop", "brand", "other"] as const;
 export const ROLES = ["user", "moderator", "admin"] as const;
 export const IMAGE_STATUSES = ["pending", "approved", "rejected"] as const;
 export const CATEGORY_FIELDS = ["category", "adulteration_type", "detection", "service"] as const;
+export const REQUESTER_TYPES = ["government", "legal", "company", "other"] as const;
+export const TRANSPARENCY_OUTCOMES = ["no_data_held", "refused", "content_removed", "other"] as const;
+export type RequesterType = (typeof REQUESTER_TYPES)[number];
+export type TransparencyOutcome = (typeof TRANSPARENCY_OUTCOMES)[number];
 export type Status = (typeof STATUSES)[number];
 export type RejectReason = (typeof REJECT_REASONS)[number];
 export type EntityKind = (typeof ENTITY_KINDS)[number];
@@ -176,11 +180,14 @@ export const adminAuditLog = pgTable("admin_audit_log", {
 
 export const transparencyRequests = pgTable("transparency_requests", {
   id: serial("id").primaryKey(),
-  requestDate: date("request_date").notNull(),
-  requesterType: text("requester_type").notNull(),
-  whatAsked: text("what_asked").notNull(),
-  outcome: text("outcome").notNull(),
-});
+  receivedAt: date("received_at").notNull(),
+  requesterType: text("requester_type", { enum: REQUESTER_TYPES }).notNull(),
+  summary: text("summary").notNull(),
+  outcome: text("outcome", { enum: TRANSPARENCY_OUTCOMES }).notNull(),
+}, (t) => [
+  check("transparency_requester_type_check", inList(t.requesterType, REQUESTER_TYPES)),
+  check("transparency_outcome_check", inList(t.outcome, TRANSPARENCY_OUTCOMES)),
+]);
 
 export type User = typeof users.$inferSelect;
 export type Report = typeof reports.$inferSelect;

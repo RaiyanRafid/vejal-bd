@@ -2,7 +2,7 @@ import { getTableColumns, sql } from "drizzle-orm";
 import { describe, expect, it, inject } from "vitest";
 import { db } from "@/lib/db/client";
 import { seed } from "@/lib/db/seed";
-import { districts, divisions, issueTypes, reports, upazilas, users } from "@/lib/db/schema";
+import { districts, divisions, issueTypes, reports, transparencyRequests, upazilas, users } from "@/lib/db/schema";
 import { resetDb } from "./helpers";
 
 describe("schema", () => {
@@ -12,6 +12,14 @@ describe("schema", () => {
     expect(await db.$count(districts)).toBe(64);
     expect(await db.$count(issueTypes)).toBe(2);
     expect(await db.$count(upazilas)).toBe(0);
+  });
+
+  it("resetDb truncates data and reseeds", async () => {
+    await db.insert(transparencyRequests).values({ receivedAt: "2026-01-01", requesterType: "other", summary: "x", outcome: "other" });
+    expect(await db.$count(transparencyRequests)).toBe(1);
+    await resetDb();
+    expect(await db.$count(transparencyRequests)).toBe(0);
+    expect(await db.$count(districts)).toBe(64);
   });
 
   it("seed is idempotent", async () => {
