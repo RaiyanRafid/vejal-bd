@@ -26,7 +26,7 @@ describe("ipHash", () => {
     const salt = Buffer.alloc(32, 7), ip = "203.0.113.77";
     const leaky = Object.assign(new Error(`Failed query: params: ${salt.toString("hex")},${ip}`), { params: [salt], cause: new Error(ip) });
     vi.spyOn(db, "insert").mockImplementation(() => { throw leaky; });
-    const err = await ipHash(ip, new Date("2026-12-04T10:00Z")).catch((e: unknown) => e as Error);
+    const err = (await ipHash(ip, new Date("2026-12-04T10:00Z")).then(() => null, (e: unknown) => e)) as Error;
     expect(err.message).toBe("ip salt unavailable");
     expect(err.cause).toBeUndefined();
     expect("params" in err).toBe(false);
