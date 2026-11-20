@@ -318,7 +318,7 @@ it("captcha payload cannot be replayed", async () => {
 
 **Interfaces:**
 - `processImage(buf: Buffer): Promise<{ data: Buffer; width: number; height: number }>` — reject > **10 MB** input and non-JPEG/PNG/WebP (HEIC rejected with code `unsupported`); `sharp(buf).rotate()` (apply EXIF orientation) → resize to max 2000px → `webp({ quality: 80 })` with no `withMetadata()`. Throws `ImageError` with `code: "too_large"|"unsupported"|"corrupt"`.
-- `putImage(data: Buffer): Promise<string>` — random key, S3 put to `vejal-images`; `getImage(key: string): Promise<Buffer|null>`.
+- `putImage(data: Buffer): Promise<string>` — random key, S3 put to `vejal-images` (dev: the team's remote MinIO from `.env`, bucket already created and private; S3 client must use `forcePathStyle: true`); `getImage(key: string): Promise<Buffer|null>`.
 - `GET /images/[key]` — serves only if a `reportImages` row with that key has `status='approved'` **and** its report is approved; else 404. Admin variant handled in Task 10.
 
 - [ ] **Step 1: Write failing tests:**
