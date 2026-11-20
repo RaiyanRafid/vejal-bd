@@ -1,0 +1,66 @@
+{
+  "ci": {
+    "collect": {
+      "startServerCommand": "npm run start",
+      "startServerReadyPattern": "Ready",
+      "url": [
+        "http://localhost:3000/",
+        "http://localhost:3000/reports",
+        "http://localhost:3000/report",
+        "http://localhost:3000/stats"
+      ],
+      "settings": {
+        "preset": "mobile"
+      }
+    },
+    "assert": {
+      "assertMatrix": [
+        {
+          "matchingUrlPattern": ".*",
+          "assertions": {
+            "largest-contentful-paint": [
+              "error",
+              {
+                "maxNumericValue": 2500
+              }
+            ],
+            "total-blocking-time": [
+              "error",
+              {
+                "maxNumericValue": 200
+              }
+            ],
+            "cumulative-layout-shift": [
+              "error",
+              {
+                "maxNumericValue": 0.1
+              }
+            ]
+          }
+        },
+        {
+          "matchingUrlPattern": "^http://localhost:3000/(reports|report)?$",
+          "assertions": {
+            "resource-summary:script:size": [
+              "error",
+              {
+                "maxNumericValue": 122880
+              }
+            ]
+          }
+        },
+        {
+          "matchingUrlPattern": "^http://localhost:3000/stats$",
+          "assertions": {
+            "resource-summary:script:size": [
+              "error",
+              {
+                "maxNumericValue": 235520
+              }
+            ]
+          }
+        }
+      ]
+    }
+  }
+}
