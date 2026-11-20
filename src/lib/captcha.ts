@@ -1,4 +1,3 @@
-import { createHash } from "node:crypto";
 import { createChallenge as create, randomInt, verifySolution, type Challenge, type Payload } from "altcha-lib";
 import { deriveKey } from "altcha-lib/algorithms/sha";
 import { db } from "@/lib/db/client";
@@ -23,13 +22,14 @@ export async function verifyCaptcha(payload: string): Promise<boolean> {
     const { challenge, solution } = JSON.parse(Buffer.from(payload, "base64").toString("utf8")) as Payload;
     const r = await verifySolution({ challenge, solution, deriveKey, hmacSignatureSecret: env.ALTCHA_HMAC_KEY });
     if (!r.verified) return false;
-    // Single use: the first insert of this payload's hash wins. windowStart is the
+    // Single use: the first insert of this challenge's signature (the payload encoding is malleable) wins. windowStart is the
     // challenge expiry so the PK is identical on replay (and cleanup drops it after 30 days).
     const exp = challenge.parameters.expiresAt;
-    if (!exp) return false;
+    const sig = challenge.signature;
+    if (!exp || !sig) return false;
     const rows = await db
       .insert(rateLimits)
-      .values({ key: createHash("sha256").update(payload).digest("hex"), action: "captcha_used", windowStart: new Date(exp * 1000), count: 1 })
+      .values({ key: sig, action: "captcha_used", windowStart: new Date(exp * 1000), count: 1 })
       .onConflictDoNothing()
       .returning({ key: rateLimits.key });
     return rows.length === 1;

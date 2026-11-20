@@ -71,6 +71,16 @@ describe("captcha", () => {
     expect(await verifyCaptcha(p)).toBe(true);
     expect(await verifyCaptcha(p)).toBe(false);
   });
+  it("re-encoded or altered copies of a used payload are rejected", async () => {
+    const p = await solvedPayload();
+    const obj = JSON.parse(Buffer.from(p, "base64").toString());
+    const enc = (o: unknown, sp?: number) => Buffer.from(JSON.stringify(o, null, sp)).toString("base64");
+    expect(await verifyCaptcha(p)).toBe(true);
+    expect(await verifyCaptcha(enc(obj, 2))).toBe(false);
+    expect(await verifyCaptcha(enc({ solution: obj.solution, challenge: obj.challenge }))).toBe(false);
+    expect(await verifyCaptcha(enc({ ...obj, solution: { ...obj.solution, time: (obj.solution.time ?? 0) + 1 } }))).toBe(false);
+    expect(await verifyCaptcha(p + "==")).toBe(false);
+  });
   it("rejects garbage, tampered and expired payloads without throwing", async () => {
     expect(await verifyCaptcha("")).toBe(false);
     expect(await verifyCaptcha("!!!")).toBe(false);
