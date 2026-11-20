@@ -21,6 +21,8 @@ export default defineConfig({
           name: "int",
           include: ["tests/int/**/*.test.ts"],
           environment: "node",
+          globalSetup: ["tests/int/global-setup.ts"],
+          fileParallelism: false,
         },
       },
     ],
